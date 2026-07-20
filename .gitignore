@@ -1,0 +1,10 @@
+__pycache__/
+*.pyc
+.venv/
+venv/
+.env
+*.db
+backend/data/meetings/
+!backend/data/.gitkeep
+.DS_Store
+*.egg-info/

@@ -1,0 +1,1371 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<title>Meeting Bot</title>
+<style>
+  :root {
+    --bg: #060810;
+    --bg-glow: #1a1440;
+    --panel: #10131f;
+    --panel-2: #151a2b;
+    --border: rgba(255,255,255,0.08);
+    --border-strong: rgba(255,255,255,0.16);
+    --text: #f1f4f9;
+    --muted: #8b93a7;
+    --muted-2: #5b6478;
+    --brand: #7c6cff;
+    --brand-bright: #9b8cff;
+    --brand-dim: rgba(124,108,255,0.14);
+    --danger: #ef4444;
+    --danger-dim: rgba(239,68,68,0.14);
+    --success: #22c55e;
+    --success-dim: rgba(34,197,94,0.14);
+    --warn: #f5a524;
+    --warn-dim: rgba(245,165,36,0.14);
+    --mono: "SFMono-Regular", Consolas, "Liberation Mono", Menlo, monospace;
+    --sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Inter, Roboto, Helvetica, Arial, sans-serif;
+    --ease: cubic-bezier(0.16, 1, 0.3, 1);
+  }
+
+  * { box-sizing: border-box; }
+
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after {
+      animation-duration: 0.001ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.001ms !important;
+      scroll-behavior: auto !important;
+    }
+  }
+
+  html { background: var(--bg); }
+
+  body {
+    margin: 0;
+    background:
+      radial-gradient(680px 380px at 15% -10%, rgba(124,108,255,0.16), transparent 60%),
+      radial-gradient(520px 320px at 100% 0%, rgba(124,108,255,0.08), transparent 55%),
+      var(--bg);
+    color: var(--text);
+    font-family: var(--sans);
+    padding: 32px 16px 72px;
+    min-height: 100vh;
+  }
+
+  .wrap { max-width: 640px; margin: 0 auto; }
+
+  .brand-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 4px;
+  }
+
+  .brand-mark {
+    width: 34px;
+    height: 34px;
+    border-radius: 10px;
+    background: linear-gradient(155deg, var(--brand), #4a3fd6);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    box-shadow: 0 4px 18px rgba(124,108,255,0.35);
+  }
+
+  .brand-mark svg { width: 18px; height: 18px; stroke: #fff; }
+
+  h1 {
+    font-size: 21px;
+    font-weight: 700;
+    letter-spacing: -0.01em;
+    margin: 0;
+  }
+
+  .subtitle {
+    color: var(--muted);
+    font-size: 13.5px;
+    margin: 0 0 30px;
+    padding-left: 46px;
+  }
+
+  .panel {
+    background: linear-gradient(180deg, var(--panel-2), var(--panel));
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 22px;
+    margin-bottom: 16px;
+    box-shadow: 0 1px 0 rgba(255,255,255,0.03) inset, 0 12px 24px -16px rgba(0,0,0,0.6);
+    opacity: 0;
+    transform: translateY(10px);
+    animation: reveal 560ms var(--ease) forwards;
+  }
+
+  .panel:nth-of-type(1) { animation-delay: 0ms; }
+  .panel:nth-of-type(2) { animation-delay: 60ms; }
+  .panel:nth-of-type(3) { animation-delay: 120ms; }
+  .panel:nth-of-type(4) { animation-delay: 160ms; }
+  .panel:nth-of-type(5) { animation-delay: 200ms; }
+  .panel:nth-of-type(6) { animation-delay: 240ms; }
+  .panel:nth-of-type(7) { animation-delay: 280ms; }
+  .panel:nth-of-type(8) { animation-delay: 320ms; }
+  .panel:nth-of-type(9) { animation-delay: 360ms; }
+
+  @keyframes reveal {
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .record-area {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 18px;
+    padding: 36px 20px 30px;
+  }
+
+  .record-btn-shell {
+    position: relative;
+    width: 128px;
+    height: 128px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .pulse-ring {
+    position: absolute;
+    inset: 0;
+    border-radius: 50%;
+    border: 1.5px solid var(--danger);
+    opacity: 0;
+    pointer-events: none;
+  }
+
+  .record-btn-shell.is-recording .pulse-ring {
+    animation: pulseRing 2.1s var(--ease) infinite;
+  }
+
+  .record-btn-shell.is-recording .pulse-ring.ring-2 { animation-delay: 0.7s; }
+
+  @keyframes pulseRing {
+    0% { transform: scale(0.78); opacity: 0.55; }
+    100% { transform: scale(1.28); opacity: 0; }
+  }
+
+  .record-btn {
+    position: relative;
+    width: 108px;
+    height: 108px;
+    border-radius: 50%;
+    border: 2px solid var(--brand);
+    background: radial-gradient(circle at 30% 25%, rgba(124,108,255,0.22), rgba(16,19,31,0.4));
+    color: var(--text);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 0 0 0 rgba(124,108,255,0.4), 0 8px 30px -8px rgba(124,108,255,0.5);
+    transition: transform 180ms var(--ease), box-shadow 220ms var(--ease), border-color 220ms var(--ease), background 220ms var(--ease);
+  }
+
+  .record-btn svg { width: 34px; height: 34px; }
+
+  .record-btn:hover:not(:disabled) { transform: scale(1.035); }
+  .record-btn:active:not(:disabled) { transform: scale(0.96); }
+
+  .record-btn:focus-visible {
+    outline: 2px solid var(--brand-bright);
+    outline-offset: 4px;
+  }
+
+  .record-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+  .record-btn.recording {
+    border-color: var(--danger);
+    background: radial-gradient(circle at 30% 25%, rgba(239,68,68,0.35), rgba(16,19,31,0.4));
+    box-shadow: 0 8px 30px -8px rgba(239,68,68,0.55);
+  }
+
+  .status-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    font-family: var(--mono);
+    font-size: 12.5px;
+    letter-spacing: 0.02em;
+    padding: 5px 12px 5px 9px;
+    border-radius: 999px;
+    background: var(--panel);
+    border: 1px solid var(--border);
+    color: var(--muted);
+    text-transform: uppercase;
+  }
+
+  .status-badge svg { width: 13px; height: 13px; }
+
+  .status-dot {
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background: var(--muted-2);
+    flex-shrink: 0;
+  }
+
+  .status-badge.recording { color: var(--danger); border-color: rgba(239,68,68,0.3); background: var(--danger-dim); }
+  .status-badge.recording .status-dot { background: var(--danger); animation: blink 1.1s ease-in-out infinite; }
+
+  .status-badge.processing { color: var(--brand-bright); border-color: rgba(124,108,255,0.3); background: var(--brand-dim); }
+  .status-badge.processing .status-dot { background: var(--brand); animation: blink 1.1s ease-in-out infinite; }
+
+  .status-badge.done { color: var(--success); border-color: rgba(34,197,94,0.3); background: var(--success-dim); }
+  .status-badge.done .status-dot { background: var(--success); }
+
+  .status-badge.error { color: var(--danger); border-color: rgba(239,68,68,0.3); background: var(--danger-dim); }
+  .status-badge.error .status-dot { background: var(--danger); }
+
+  @keyframes blink {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.35; }
+  }
+
+  .timer {
+    font-family: var(--mono);
+    font-variant-numeric: tabular-nums;
+    font-size: 32px;
+    font-weight: 600;
+    letter-spacing: 0.03em;
+    color: var(--text);
+  }
+
+  .processing-note {
+    display: none;
+    width: 100%;
+    max-width: 280px;
+    text-align: center;
+  }
+
+  .processing-note p {
+    color: var(--muted);
+    font-size: 12.5px;
+    font-family: var(--mono);
+    margin: 0 0 10px;
+  }
+
+  .progress-track {
+    height: 4px;
+    border-radius: 999px;
+    background: var(--border);
+    overflow: hidden;
+  }
+
+  .progress-fill {
+    height: 100%;
+    width: 40%;
+    border-radius: 999px;
+    background: linear-gradient(90deg, var(--brand), var(--brand-bright));
+    animation: indeterminate 1.4s ease-in-out infinite;
+  }
+
+  @keyframes indeterminate {
+    0% { transform: translateX(-100%); }
+    100% { transform: translateX(350%); }
+  }
+
+  h2 {
+    font-size: 12.5px;
+    text-transform: uppercase;
+    letter-spacing: 0.09em;
+    color: var(--muted);
+    margin: 0 0 14px;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    gap: 7px;
+  }
+
+  h2 svg { width: 14px; height: 14px; stroke: var(--muted-2); }
+
+  .summary-text {
+    font-size: 14.5px;
+    line-height: 1.7;
+    white-space: pre-wrap;
+    color: var(--text);
+  }
+
+  ul.plain {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  ul.plain li {
+    padding: 10px 0 10px 20px;
+    border-bottom: 1px solid var(--border);
+    font-size: 14px;
+    line-height: 1.55;
+    position: relative;
+  }
+
+  ul.plain li:not(.empty-row)::before {
+    content: "";
+    position: absolute;
+    left: 2px;
+    top: 17px;
+    width: 6px;
+    height: 6px;
+    border-radius: 2px;
+    background: var(--brand);
+  }
+
+  ul.plain li:last-child { border-bottom: none; padding-bottom: 0; }
+  ul.plain li:first-child { padding-top: 0; }
+
+  ul.plain li.empty-row { padding: 0; }
+
+  table { width: 100%; border-collapse: collapse; font-size: 13.5px; }
+
+  th, td {
+    text-align: left;
+    padding: 10px 8px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  tbody tr:last-child td { border-bottom: none; }
+  tbody tr:not(.empty-row) { transition: background 150ms var(--ease); }
+  tbody tr:not(.empty-row):hover { background: rgba(255,255,255,0.02); }
+
+  th {
+    color: var(--muted-2);
+    text-transform: uppercase;
+    font-size: 10.5px;
+    letter-spacing: 0.07em;
+    font-weight: 700;
+  }
+
+  td.owner { font-family: var(--mono); color: var(--brand-bright); }
+  td.due { font-family: var(--mono); color: var(--muted); white-space: nowrap; }
+
+  .chips { display: flex; flex-wrap: wrap; gap: 8px; }
+
+  .chip {
+    font-family: var(--mono);
+    font-size: 12px;
+    padding: 5px 11px;
+    border: 1px solid rgba(124,108,255,0.28);
+    background: var(--brand-dim);
+    border-radius: 999px;
+    color: var(--brand-bright);
+  }
+
+  .empty { color: var(--muted-2); font-size: 13px; font-family: var(--mono); }
+
+  .empty-state {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 9px;
+    padding: 26px 10px 10px;
+    color: var(--muted-2);
+    font-size: 13px;
+    text-align: center;
+    width: 100%;
+  }
+
+  .empty-state svg { width: 22px; height: 22px; stroke: var(--muted-2); opacity: 0.55; }
+
+  .summary-meta {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+    margin: -6px 0 16px;
+    font-size: 12px;
+    color: var(--muted);
+  }
+
+  .summary-title {
+    color: var(--text);
+    font-weight: 600;
+    font-size: 13.5px;
+  }
+
+  .summary-meta .meta-item { font-family: var(--mono); }
+  .summary-meta .meta-sep { color: var(--muted-2); }
+
+  .search-row { display: flex; gap: 8px; }
+
+  input[type="text"] {
+    flex: 1;
+    background: rgba(0,0,0,0.25);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 12px 14px;
+    color: var(--text);
+    font-size: 14px;
+    min-height: 44px;
+    transition: border-color 180ms var(--ease), box-shadow 180ms var(--ease);
+  }
+
+  input[type="text"]::placeholder { color: var(--muted-2); }
+
+  input[type="text"]:focus-visible {
+    outline: none;
+    border-color: var(--brand);
+    box-shadow: 0 0 0 3px var(--brand-dim);
+  }
+
+  button {
+    font-family: inherit;
+  }
+
+  button.search-btn {
+    background: linear-gradient(155deg, var(--brand-bright), var(--brand));
+    color: #fff;
+    border: none;
+    border-radius: 10px;
+    padding: 0 20px;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    min-height: 44px;
+    transition: transform 150ms var(--ease), box-shadow 150ms var(--ease);
+    box-shadow: 0 6px 18px -6px rgba(124,108,255,0.6);
+  }
+
+  button.search-btn svg { width: 15px; height: 15px; }
+
+  button.search-btn:hover { transform: translateY(-1px); }
+  button.search-btn:active { transform: translateY(0) scale(0.97); }
+
+  button.search-btn:focus-visible {
+    outline: 2px solid var(--brand-bright);
+    outline-offset: 2px;
+  }
+
+  button.search-btn:disabled {
+    opacity: 0.45;
+    cursor: not-allowed;
+    transform: none;
+  }
+
+  button.search-btn.secondary {
+    background: var(--panel);
+    color: var(--text);
+    border: 1px solid var(--border-strong);
+    box-shadow: none;
+  }
+
+  button.search-btn.secondary:hover:not(:disabled) {
+    border-color: var(--brand);
+    transform: translateY(-1px);
+  }
+
+  .download-hint {
+    color: var(--muted);
+    font-size: 13px;
+    margin: 0 0 16px;
+  }
+
+  .download-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+  }
+
+  .dropzone {
+    border: 1.5px dashed var(--border-strong);
+    border-radius: 12px;
+    padding: 22px 16px;
+    text-align: center;
+    cursor: pointer;
+    transition: border-color 180ms var(--ease), background 180ms var(--ease);
+    background: rgba(255,255,255,0.015);
+  }
+
+  .dropzone:hover, .dropzone:focus-visible { border-color: var(--brand); background: var(--brand-dim); outline: none; }
+  .dropzone.dragover { border-color: var(--brand-bright); background: var(--brand-dim); }
+
+  .dropzone svg { width: 26px; height: 26px; stroke: var(--muted); margin-bottom: 8px; transition: stroke 180ms var(--ease); }
+  .dropzone:hover svg, .dropzone.dragover svg { stroke: var(--brand-bright); }
+
+  .dropzone-label { font-size: 13.5px; color: var(--muted); margin: 0; }
+  .dropzone-label strong { color: var(--text); font-weight: 600; }
+
+  .dropzone-filename {
+    font-family: var(--mono);
+    font-size: 12.5px;
+    color: var(--brand-bright);
+    margin-top: 6px;
+    word-break: break-all;
+  }
+
+  .upload-actions {
+    display: flex;
+    justify-content: flex-end;
+    margin-top: 14px;
+  }
+
+  .result-card {
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 14px 16px;
+    margin-top: 10px;
+    transition: border-color 180ms var(--ease), transform 180ms var(--ease);
+    animation: reveal 420ms var(--ease) both;
+  }
+
+  .result-card:hover { border-color: var(--border-strong); transform: translateY(-1px); }
+
+  .result-head {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    gap: 10px;
+    margin-bottom: 8px;
+    flex-wrap: wrap;
+  }
+
+  .result-title { font-size: 14.5px; font-weight: 600; }
+
+  .result-meta {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    font-family: var(--mono);
+    font-size: 11.5px;
+    color: var(--muted);
+    white-space: nowrap;
+  }
+
+  .score-pill {
+    font-family: var(--mono);
+    font-size: 11px;
+    padding: 2px 8px;
+    border-radius: 999px;
+    background: var(--success-dim);
+    color: var(--success);
+  }
+
+  .result-snippet {
+    font-size: 13.5px;
+    color: var(--muted);
+    line-height: 1.55;
+  }
+
+  @media (max-width: 480px) {
+    body { padding: 22px 12px 60px; }
+    .panel { padding: 18px; border-radius: 14px; }
+    .timer { font-size: 27px; }
+    .record-btn-shell { width: 112px; height: 112px; }
+    .record-btn { width: 96px; height: 96px; }
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="brand-row">
+    <div class="brand-mark">
+      <svg viewBox="0 0 24 24" fill="none" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M12 15a3 3 0 0 0 3-3V6a3 3 0 0 0-6 0v6a3 3 0 0 0 3 3z"/>
+        <path d="M19 11a7 7 0 0 1-14 0"/>
+        <path d="M12 18v3"/>
+      </svg>
+    </div>
+    <h1>Meeting Bot</h1>
+  </div>
+  <p class="subtitle">Offline room recorder &amp; AI notetaker</p>
+
+  <div class="panel record-area">
+    <div class="record-btn-shell" id="recordBtnShell">
+      <span class="pulse-ring ring-1"></span>
+      <span class="pulse-ring ring-2"></span>
+      <button id="recordBtn" class="record-btn" type="button" aria-label="Start recording">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" id="recordIcon">
+          <path d="M12 15a3 3 0 0 0 3-3V6a3 3 0 0 0-6 0v6a3 3 0 0 0 3 3z"/>
+          <path d="M19 11a7 7 0 0 1-14 0"/>
+          <path d="M12 18v3"/>
+        </svg>
+      </button>
+    </div>
+    <span id="statusBadge" class="status-badge">
+      <span id="statusDot" class="status-dot"></span>
+      <span id="statusText">idle</span>
+    </span>
+    <div id="timer" class="timer">00:00:00</div>
+    <div id="processingNote" class="processing-note">
+      <p>processing meeting&hellip; this can take a few minutes</p>
+      <div class="progress-track"><div class="progress-fill"></div></div>
+    </div>
+  </div>
+
+  <div class="panel">
+    <h2>
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 16V4M12 4l-4 4M12 4l4 4"/><path d="M4 16v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2"/></svg>
+      Upload Recording
+    </h2>
+    <div class="dropzone" id="dropzone" tabindex="0" role="button" aria-label="Choose or drop an audio file">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 16V4M12 4l-4 4M12 4l4 4"/><path d="M4 16v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2"/></svg>
+      <p class="dropzone-label"><strong>Click to choose</strong> or drop an audio file here</p>
+      <p class="dropzone-filename" id="dropzoneFilename"></p>
+    </div>
+    <input type="file" id="uploadInput" accept="audio/*" style="display:none;" />
+    <div class="upload-actions">
+      <button id="uploadBtn" class="search-btn" type="button">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 16V4M12 4l-4 4M12 4l4 4"/><path d="M4 16v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2"/></svg>
+        Upload &amp; Process
+      </button>
+    </div>
+  </div>
+
+  <div class="panel">
+    <h2>
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 6h16M4 12h16M4 18h10"/></svg>
+      Summary
+    </h2>
+    <div id="summaryMeta" class="summary-meta" style="display:none;"></div>
+    <div id="summaryText" class="summary-text empty">No meeting processed yet.</div>
+  </div>
+
+  <div class="panel">
+    <h2>
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M20.59 13.41 11 3.83A2 2 0 0 0 9.59 3.24H4a1 1 0 0 0-1 1v5.59a2 2 0 0 0 .59 1.41l9.58 9.59a2 2 0 0 0 2.83 0l4.59-4.59a2 2 0 0 0 0-2.83z"/><circle cx="7.5" cy="7.5" r="1"/></svg>
+      Key Topics
+    </h2>
+    <div id="keyTopics" class="chips">
+      <div class="empty-state">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M20.59 13.41 11 3.83A2 2 0 0 0 9.59 3.24H4a1 1 0 0 0-1 1v5.59a2 2 0 0 0 .59 1.41l9.58 9.59a2 2 0 0 0 2.83 0l4.59-4.59a2 2 0 0 0 0-2.83z"/><circle cx="7.5" cy="7.5" r="1"/></svg>
+        <span>No distinct topics identified yet.</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="panel">
+    <h2>
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+      Participants
+    </h2>
+    <div id="participants" class="chips">
+      <div class="empty-state">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg>
+        <span>No participants identified yet.</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="panel">
+    <h2>
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="m9 12 2 2 4-4"/><circle cx="12" cy="12" r="9"/></svg>
+      Decisions
+    </h2>
+    <ul id="decisions" class="plain">
+      <li class="empty-row">
+        <div class="empty-state">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="m9 12 2 2 4-4"/><circle cx="12" cy="12" r="9"/></svg>
+          <span>No decisions were reached yet.</span>
+        </div>
+      </li>
+    </ul>
+  </div>
+
+  <div class="panel">
+    <h2>
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M3 10h18M8 4v16"/></svg>
+      Action Items
+    </h2>
+    <table>
+      <thead>
+        <tr><th>Owner</th><th>Task</th><th>Due</th></tr>
+      </thead>
+      <tbody id="actionItems">
+        <tr class="empty-row"><td colspan="3">
+          <div class="empty-state">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M3 10h18M8 4v16"/></svg>
+            <span>No action items were assigned yet.</span>
+          </div>
+        </td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="panel">
+    <h2>
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="M7 10l5 5 5-5"/><path d="M12 15V3"/></svg>
+      Download
+    </h2>
+    <p class="download-hint">Save this meeting's transcript and summary as text files.</p>
+    <div class="download-actions">
+      <button id="downloadTranscriptBtn" class="search-btn secondary" type="button" disabled>
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="M7 10l5 5 5-5"/><path d="M12 15V3"/></svg>
+        Transcript (.txt)
+      </button>
+      <button id="downloadSummaryBtn" class="search-btn secondary" type="button" disabled>
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="M7 10l5 5 5-5"/><path d="M12 15V3"/></svg>
+        Summary (.txt)
+      </button>
+    </div>
+  </div>
+
+  <div class="panel">
+    <h2>
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg>
+      Search Transcripts
+    </h2>
+    <form id="searchForm" class="search-row">
+      <input id="searchInput" type="text" placeholder="e.g. budget approval" autocomplete="off" />
+      <button type="submit" class="search-btn">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg>
+        Search
+      </button>
+    </form>
+    <div id="searchResults"></div>
+  </div>
+</div>
+
+<script>
+(function () {
+  "use strict";
+
+  // Backend URL resolution, in priority order:
+  // 1. ?api=<url> query param (persisted to localStorage so it survives reloads)
+  // 2. previously saved localStorage value
+  // 3. localhost:8000 for local dev (file:// or localhost)
+  // 4. PROD_API_BASE below, for a deployed frontend talking to a deployed backend
+  var PROD_API_BASE = "";
+
+  var API_BASE = (function () {
+    var params = new URLSearchParams(location.search);
+    var fromQuery = params.get("api");
+    if (fromQuery) {
+      localStorage.setItem("meetingbot_api_base", fromQuery);
+      return fromQuery.replace(/\/$/, "");
+    }
+    var stored = localStorage.getItem("meetingbot_api_base");
+    if (stored) return stored.replace(/\/$/, "");
+    if (location.protocol === "file:" || !location.hostname || location.hostname === "localhost" || location.hostname === "127.0.0.1") {
+      return "http://localhost:8000";
+    }
+    return PROD_API_BASE.replace(/\/$/, "");
+  })();
+
+  if (!API_BASE) {
+    console.error("No backend API URL configured. Set PROD_API_BASE in index.html, or load the page with ?api=https://your-backend-url");
+  }
+
+  var recordBtn = document.getElementById("recordBtn");
+  var recordBtnShell = document.getElementById("recordBtnShell");
+  var recordIcon = document.getElementById("recordIcon");
+  var statusBadge = document.getElementById("statusBadge");
+  var statusDot = document.getElementById("statusDot");
+  var statusText = document.getElementById("statusText");
+  var timerEl = document.getElementById("timer");
+  var processingNote = document.getElementById("processingNote");
+  var summaryText = document.getElementById("summaryText");
+  var summaryMeta = document.getElementById("summaryMeta");
+  var keyTopicsEl = document.getElementById("keyTopics");
+  var participantsEl = document.getElementById("participants");
+  var decisionsEl = document.getElementById("decisions");
+  var actionItemsEl = document.getElementById("actionItems");
+  var downloadTranscriptBtn = document.getElementById("downloadTranscriptBtn");
+  var downloadSummaryBtn = document.getElementById("downloadSummaryBtn");
+  var searchForm = document.getElementById("searchForm");
+  var searchInput = document.getElementById("searchInput");
+  var searchResultsEl = document.getElementById("searchResults");
+  var uploadInput = document.getElementById("uploadInput");
+  var uploadBtn = document.getElementById("uploadBtn");
+  var dropzone = document.getElementById("dropzone");
+  var dropzoneFilename = document.getElementById("dropzoneFilename");
+
+  var ICON_MIC = '<path d="M12 15a3 3 0 0 0 3-3V6a3 3 0 0 0-6 0v6a3 3 0 0 0 3 3z"/><path d="M19 11a7 7 0 0 1-14 0"/><path d="M12 18v3"/>';
+  var ICON_STOP = '<rect x="7" y="7" width="10" height="10" rx="1.5"/>';
+  var ICON_TOPIC = '<path d="M20.59 13.41 11 3.83A2 2 0 0 0 9.59 3.24H4a1 1 0 0 0-1 1v5.59a2 2 0 0 0 .59 1.41l9.58 9.59a2 2 0 0 0 2.83 0l4.59-4.59a2 2 0 0 0 0-2.83z"/><circle cx="7.5" cy="7.5" r="1"/>';
+  var ICON_PEOPLE = '<path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/>';
+  var ICON_CHECK = '<path d="m9 12 2 2 4-4"/><circle cx="12" cy="12" r="9"/>';
+  var ICON_TABLE = '<rect x="3" y="4" width="18" height="16" rx="2"/><path d="M3 10h18M8 4v16"/>';
+
+  function emptyStateHtml(icon, text) {
+    return '<div class="empty-state"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">' +
+      icon + '</svg><span>' + escapeHtml(text) + "</span></div>";
+  }
+
+  var CHUNK_INTERVAL_MS = 12000;
+
+  var sessionId = null;
+  var lastMeetingId = null;
+  var lastSummaryData = null;
+  var mediaStream = null;
+  var currentRecorder = null;
+  var currentChunks = [];
+  var chunkTimer = null;
+  var elapsedTimer = null;
+  var startTime = null;
+  var isRecording = false;
+
+  function setStatus(state) {
+    statusBadge.className = "status-badge " + state;
+    statusText.textContent = state;
+    processingNote.style.display = state === "processing" ? "block" : "none";
+  }
+
+  function pad(n) { return String(n).padStart(2, "0"); }
+
+  function formatElapsed(totalSeconds) {
+    var h = Math.floor(totalSeconds / 3600);
+    var m = Math.floor((totalSeconds % 3600) / 60);
+    var s = totalSeconds % 60;
+    return pad(h) + ":" + pad(m) + ":" + pad(s);
+  }
+
+  function startElapsedTimer() {
+    startTime = Date.now();
+    timerEl.textContent = "00:00:00";
+    elapsedTimer = setInterval(function () {
+      var secs = Math.floor((Date.now() - startTime) / 1000);
+      timerEl.textContent = formatElapsed(secs);
+    }, 1000);
+  }
+
+  function stopElapsedTimer() {
+    clearInterval(elapsedTimer);
+    elapsedTimer = null;
+  }
+
+  function pickMimeType() {
+    var candidates = ["audio/webm;codecs=opus", "audio/webm", "audio/mp4", "audio/aac"];
+    if (!window.MediaRecorder || !MediaRecorder.isTypeSupported) return "";
+    for (var i = 0; i < candidates.length; i++) {
+      if (MediaRecorder.isTypeSupported(candidates[i])) return candidates[i];
+    }
+    return "";
+  }
+
+  function extFromMime(mime) {
+    if (!mime) return "webm";
+    if (mime.indexOf("mp4") !== -1) return "m4a";
+    if (mime.indexOf("aac") !== -1) return "aac";
+    return "webm";
+  }
+
+  function sleep(ms) { return new Promise(function (r) { setTimeout(r, ms); }); }
+
+  function uploadChunkOnce(url, form) {
+    return fetch(url, { method: "POST", body: form }).then(function (res) {
+      if (!res.ok) throw new Error("HTTP " + res.status);
+      return res;
+    });
+  }
+
+  // Long recordings mean hundreds of chunk uploads over spotty wifi/mobile data —
+  // a transient network blip shouldn't silently lose 12 seconds of the meeting.
+  function uploadChunk(blob) {
+    if (!blob || blob.size === 0) return Promise.resolve();
+    var ts = Date.now();
+    var ext = extFromMime(blob.type);
+    var url = API_BASE + "/audio/chunk?session_id=" + encodeURIComponent(sessionId) + "&ts=" + ts;
+    var attempts = 0;
+    var maxAttempts = 4;
+
+    function attempt() {
+      attempts++;
+      var form = new FormData();
+      form.append("audio", blob, "chunk_" + ts + "." + ext);
+      return uploadChunkOnce(url, form).catch(function (err) {
+        if (attempts >= maxAttempts) {
+          console.error("chunk upload failed permanently after " + attempts + " attempts", err);
+          return;
+        }
+        var delay = 1000 * Math.pow(2, attempts - 1);
+        console.warn("chunk upload failed, retrying in " + delay + "ms", err);
+        return sleep(delay).then(attempt);
+      });
+    }
+
+    return attempt();
+  }
+
+  function beginNewChunkRecorder() {
+    var mimeType = pickMimeType();
+    var options = mimeType ? { mimeType: mimeType } : undefined;
+    currentRecorder = new MediaRecorder(mediaStream, options);
+    currentChunks = [];
+    currentRecorder.ondataavailable = function (e) {
+      if (e.data && e.data.size > 0) currentChunks.push(e.data);
+    };
+    currentRecorder.start();
+  }
+
+  function cycleChunk() {
+    var finishedRecorder = currentRecorder;
+    var finishedChunks = currentChunks;
+    if (finishedRecorder && finishedRecorder.state !== "inactive") {
+      finishedRecorder.onstop = function () {
+        var blob = new Blob(finishedChunks, { type: finishedRecorder.mimeType || "audio/webm" });
+        uploadChunk(blob);
+      };
+      finishedRecorder.stop();
+    }
+    beginNewChunkRecorder();
+  }
+
+  function finalizeRecording() {
+    return new Promise(function (resolve) {
+      if (!currentRecorder || currentRecorder.state === "inactive") {
+        resolve();
+        return;
+      }
+      var finishedChunks = currentChunks;
+      var recorder = currentRecorder;
+      recorder.onstop = function () {
+        var blob = new Blob(finishedChunks, { type: recorder.mimeType || "audio/webm" });
+        uploadChunk(blob).then(resolve);
+      };
+      recorder.stop();
+    });
+  }
+
+  function setRecordButtonState(recording) {
+    recordIcon.innerHTML = recording ? ICON_STOP : ICON_MIC;
+    recordBtn.setAttribute("aria-label", recording ? "Stop recording" : "Start recording");
+    recordBtn.classList.toggle("recording", recording);
+    recordBtnShell.classList.toggle("is-recording", recording);
+  }
+
+  // Best-effort: keep the screen from sleeping mid-recording on long meetings.
+  // Not supported everywhere (notably Safari) — fails silently where unavailable,
+  // and the browser auto-releases it whenever the tab is hidden anyway.
+  var wakeLock = null;
+
+  async function acquireWakeLock() {
+    if (!("wakeLock" in navigator)) return;
+    try {
+      wakeLock = await navigator.wakeLock.request("screen");
+    } catch (err) {
+      console.warn("wake lock unavailable", err);
+    }
+  }
+
+  function releaseWakeLock() {
+    if (wakeLock) {
+      wakeLock.release().catch(function () {});
+      wakeLock = null;
+    }
+  }
+
+  document.addEventListener("visibilitychange", function () {
+    if (isRecording && document.visibilityState === "visible") acquireWakeLock();
+  });
+
+  window.addEventListener("beforeunload", function (e) {
+    if (isRecording) {
+      e.preventDefault();
+      e.returnValue = "";
+    }
+  });
+
+  async function startRecording() {
+    recordBtn.disabled = true;
+    try {
+      var res = await fetch(API_BASE + "/session/start", { method: "POST" });
+      if (!res.ok) throw new Error("session/start failed");
+      var data = await res.json();
+      sessionId = data.session_id;
+
+      mediaStream = await navigator.mediaDevices.getUserMedia({ audio: true });
+
+      resetSummaryUI();
+      beginNewChunkRecorder();
+      chunkTimer = setInterval(cycleChunk, CHUNK_INTERVAL_MS);
+      startElapsedTimer();
+
+      isRecording = true;
+      setRecordButtonState(true);
+      uploadBtn.disabled = true;
+      setStatus("recording");
+      acquireWakeLock();
+    } catch (err) {
+      console.error(err);
+      setStatus("error");
+      alert("Could not start recording: " + err.message);
+    } finally {
+      recordBtn.disabled = false;
+    }
+  }
+
+  async function stopRecording() {
+    recordBtn.disabled = true;
+    clearInterval(chunkTimer);
+    chunkTimer = null;
+    stopElapsedTimer();
+    releaseWakeLock();
+
+    await finalizeRecording();
+
+    if (mediaStream) {
+      mediaStream.getTracks().forEach(function (t) { t.stop(); });
+      mediaStream = null;
+    }
+
+    isRecording = false;
+    setRecordButtonState(false);
+    recordBtn.disabled = false;
+    uploadBtn.disabled = false;
+
+    setStatus("processing");
+
+    try {
+      await fetch(API_BASE + "/session/end", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ session_id: sessionId }),
+      });
+    } catch (err) {
+      console.error("session/end failed", err);
+    }
+
+    pollSummary();
+  }
+
+  async function pollSummary() {
+    try {
+      var res = await fetch(API_BASE + "/meetings/" + sessionId + "/summary");
+      var data = await res.json();
+      if (data.ready) {
+        renderSummary(data);
+        setStatus("done");
+        return;
+      }
+      if (data.status === "error") {
+        setStatus("error");
+        return;
+      }
+    } catch (err) {
+      console.error("summary poll failed", err);
+    }
+    setTimeout(pollSummary, 5000);
+  }
+
+  function resetSummaryUI() {
+    lastMeetingId = null;
+    lastSummaryData = null;
+    downloadTranscriptBtn.disabled = true;
+    downloadSummaryBtn.disabled = true;
+    summaryText.textContent = "No meeting processed yet.";
+    summaryText.classList.add("empty");
+    summaryMeta.style.display = "none";
+    summaryMeta.innerHTML = "";
+    keyTopicsEl.innerHTML = emptyStateHtml(ICON_TOPIC, "No distinct topics identified yet.");
+    participantsEl.innerHTML = emptyStateHtml(ICON_PEOPLE, "No participants identified yet.");
+    decisionsEl.innerHTML = '<li class="empty-row">' + emptyStateHtml(ICON_CHECK, "No decisions were reached yet.") + "</li>";
+    actionItemsEl.innerHTML = '<tr class="empty-row"><td colspan="3">' + emptyStateHtml(ICON_TABLE, "No action items were assigned yet.") + "</td></tr>";
+  }
+
+  function formatDuration(startIso, endIso) {
+    if (!startIso || !endIso) return "";
+    var ms = new Date(endIso).getTime() - new Date(startIso).getTime();
+    if (!isFinite(ms) || ms < 0) return "";
+    return "duration " + formatElapsed(Math.round(ms / 1000));
+  }
+
+  function renderSummary(data) {
+    lastMeetingId = sessionId;
+    lastSummaryData = data;
+    downloadTranscriptBtn.disabled = false;
+    downloadSummaryBtn.disabled = false;
+
+    summaryText.textContent = data.summary || "(no summary text)";
+    summaryText.classList.remove("empty");
+
+    var metaParts = [];
+    if (data.title) metaParts.push('<span class="summary-title">' + escapeHtml(data.title) + "</span>");
+    if (data.started_at) metaParts.push('<span class="meta-item">' + escapeHtml(formatDate(data.started_at)) + "</span>");
+    var duration = formatDuration(data.started_at, data.ended_at);
+    if (duration) metaParts.push('<span class="meta-item">' + escapeHtml(duration) + "</span>");
+    if (metaParts.length) {
+      summaryMeta.innerHTML = metaParts.join('<span class="meta-sep">&middot;</span>');
+      summaryMeta.style.display = "flex";
+    } else {
+      summaryMeta.style.display = "none";
+    }
+
+    keyTopicsEl.innerHTML = "";
+    if (data.key_topics && data.key_topics.length) {
+      data.key_topics.forEach(function (topic) {
+        var span = document.createElement("span");
+        span.className = "chip";
+        span.textContent = topic;
+        keyTopicsEl.appendChild(span);
+      });
+    } else {
+      keyTopicsEl.innerHTML = emptyStateHtml(ICON_TOPIC, "No distinct topics identified in this recording.");
+    }
+
+    participantsEl.innerHTML = "";
+    if (data.participants && data.participants.length) {
+      data.participants.forEach(function (p) {
+        var span = document.createElement("span");
+        span.className = "chip";
+        span.textContent = p;
+        participantsEl.appendChild(span);
+      });
+    } else {
+      participantsEl.innerHTML = emptyStateHtml(ICON_PEOPLE, "No participants identified in this recording.");
+    }
+
+    decisionsEl.innerHTML = "";
+    if (data.decisions && data.decisions.length) {
+      data.decisions.forEach(function (d) {
+        var li = document.createElement("li");
+        li.textContent = d;
+        decisionsEl.appendChild(li);
+      });
+    } else {
+      decisionsEl.innerHTML = '<li class="empty-row">' + emptyStateHtml(ICON_CHECK, "No decisions were reached in this recording.") + "</li>";
+    }
+
+    actionItemsEl.innerHTML = "";
+    if (data.action_items && data.action_items.length) {
+      data.action_items.forEach(function (item) {
+        var tr = document.createElement("tr");
+        tr.innerHTML =
+          '<td class="owner">' + escapeHtml(item.owner) + "</td>" +
+          "<td>" + escapeHtml(item.task) + "</td>" +
+          '<td class="due">' + escapeHtml(item.due || "—") + "</td>";
+        actionItemsEl.appendChild(tr);
+      });
+    } else {
+      actionItemsEl.innerHTML = '<tr class="empty-row"><td colspan="3">' + emptyStateHtml(ICON_TABLE, "No action items were assigned in this recording.") + "</td></tr>";
+    }
+  }
+
+  function escapeHtml(str) {
+    var div = document.createElement("div");
+    div.textContent = str == null ? "" : String(str);
+    return div.innerHTML;
+  }
+
+  function formatDate(iso) {
+    try {
+      return new Date(iso).toLocaleString();
+    } catch (e) {
+      return iso;
+    }
+  }
+
+  function slugify(str) {
+    var slug = String(str || "meeting").toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "");
+    return slug || "meeting";
+  }
+
+  function triggerDownload(filename, text) {
+    var blob = new Blob([text], { type: "text/plain;charset=utf-8" });
+    var url = URL.createObjectURL(blob);
+    var a = document.createElement("a");
+    a.href = url;
+    a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  }
+
+  async function downloadTranscript() {
+    if (!lastMeetingId) return;
+    downloadTranscriptBtn.disabled = true;
+    try {
+      var res = await fetch(API_BASE + "/meetings/" + lastMeetingId);
+      if (!res.ok) throw new Error("HTTP " + res.status);
+      var data = await res.json();
+      var lines = [data.title || "Untitled meeting", formatDate(data.started_at), ""];
+      var segments = data.segments || [];
+      if (segments.length) {
+        segments.forEach(function (seg) {
+          lines.push("[" + formatElapsed(Math.floor(seg.started_ms / 1000)) + " - " + formatElapsed(Math.floor(seg.ended_ms / 1000)) + "] " + seg.speaker_label + ": " + seg.text);
+        });
+      } else {
+        lines.push("(no transcript segments)");
+      }
+      triggerDownload(slugify(data.title) + "-transcript.txt", lines.join("\n"));
+    } catch (err) {
+      console.error("transcript download failed", err);
+      alert("Could not download transcript: " + err.message);
+    } finally {
+      downloadTranscriptBtn.disabled = false;
+    }
+  }
+
+  function downloadSummary() {
+    if (!lastSummaryData) return;
+    var d = lastSummaryData;
+    var lines = [d.title || "Untitled meeting", d.started_at ? formatDate(d.started_at) : "", "", "SUMMARY", d.summary || "(no summary text)", ""];
+
+    lines.push("KEY TOPICS");
+    lines.push((d.key_topics && d.key_topics.length) ? d.key_topics.map(function (t) { return "- " + t; }).join("\n") : "(none)");
+    lines.push("");
+
+    lines.push("DECISIONS");
+    lines.push((d.decisions && d.decisions.length) ? d.decisions.map(function (t) { return "- " + t; }).join("\n") : "(none)");
+    lines.push("");
+
+    lines.push("ACTION ITEMS");
+    lines.push((d.action_items && d.action_items.length)
+      ? d.action_items.map(function (a) { return "- " + a.owner + ": " + a.task + (a.due ? " (due " + a.due + ")" : ""); }).join("\n")
+      : "(none)");
+    lines.push("");
+
+    lines.push("PARTICIPANTS");
+    lines.push((d.participants && d.participants.length) ? d.participants.join(", ") : "(none)");
+
+    triggerDownload(slugify(d.title) + "-summary.txt", lines.join("\n"));
+  }
+
+  async function runSearch(query) {
+    searchResultsEl.innerHTML = '<p class="empty">searching&hellip;</p>';
+    try {
+      var res = await fetch(API_BASE + "/search", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ query: query, limit: 5 }),
+      });
+      var data = await res.json();
+      renderSearchResults(data.results || []);
+    } catch (err) {
+      console.error("search failed", err);
+      searchResultsEl.innerHTML = '<p class="empty">search failed</p>';
+    }
+  }
+
+  function renderSearchResults(results) {
+    if (!results.length) {
+      searchResultsEl.innerHTML = '<p class="empty">no matches</p>';
+      return;
+    }
+    searchResultsEl.innerHTML = "";
+    results.forEach(function (r, i) {
+      var card = document.createElement("div");
+      card.className = "result-card";
+      card.style.animationDelay = (i * 45) + "ms";
+      card.innerHTML =
+        '<div class="result-head">' +
+          '<span class="result-title">' + escapeHtml(r.meeting_title) + "</span>" +
+          '<span class="result-meta">' + formatDate(r.meeting_date) + '<span class="score-pill">' + r.score.toFixed(3) + "</span></span>" +
+        "</div>" +
+        '<div class="result-snippet">' + escapeHtml(r.snippet) + "</div>";
+      searchResultsEl.appendChild(card);
+    });
+  }
+
+  function setSelectedFile(file) {
+    dropzoneFilename.textContent = file ? file.name : "";
+  }
+
+  async function uploadRecording() {
+    var file = uploadInput.files[0];
+    if (!file) {
+      alert("Choose an audio file first.");
+      return;
+    }
+    if (isRecording) {
+      alert("Stop the current recording first.");
+      return;
+    }
+
+    recordBtn.disabled = true;
+    uploadBtn.disabled = true;
+    try {
+      var startRes = await fetch(API_BASE + "/session/start", { method: "POST" });
+      if (!startRes.ok) throw new Error("session/start failed");
+      var startData = await startRes.json();
+      sessionId = startData.session_id;
+
+      var form = new FormData();
+      form.append("audio", file, file.name);
+      var chunkRes = await fetch(
+        API_BASE + "/audio/chunk?session_id=" + encodeURIComponent(sessionId) + "&ts=" + Date.now(),
+        { method: "POST", body: form }
+      );
+      if (!chunkRes.ok) throw new Error("audio/chunk failed");
+
+      resetSummaryUI();
+      setStatus("processing");
+
+      var endRes = await fetch(API_BASE + "/session/end", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ session_id: sessionId }),
+      });
+      if (!endRes.ok) throw new Error("session/end failed");
+
+      pollSummary();
+    } catch (err) {
+      console.error(err);
+      setStatus("error");
+      alert("Upload failed: " + err.message);
+    } finally {
+      recordBtn.disabled = false;
+      uploadBtn.disabled = false;
+      uploadInput.value = "";
+      setSelectedFile(null);
+    }
+  }
+
+  recordBtn.addEventListener("click", function () {
+    if (isRecording) {
+      stopRecording();
+    } else {
+      startRecording();
+    }
+  });
+
+  uploadBtn.addEventListener("click", uploadRecording);
+
+  dropzone.addEventListener("click", function () { uploadInput.click(); });
+  dropzone.addEventListener("keydown", function (e) {
+    if (e.key === "Enter" || e.key === " ") { e.preventDefault(); uploadInput.click(); }
+  });
+
+  uploadInput.addEventListener("change", function () {
+    setSelectedFile(uploadInput.files[0] || null);
+  });
+
+  ["dragenter", "dragover"].forEach(function (evt) {
+    dropzone.addEventListener(evt, function (e) {
+      e.preventDefault();
+      dropzone.classList.add("dragover");
+    });
+  });
+
+  ["dragleave", "dragend"].forEach(function (evt) {
+    dropzone.addEventListener(evt, function () {
+      dropzone.classList.remove("dragover");
+    });
+  });
+
+  dropzone.addEventListener("drop", function (e) {
+    e.preventDefault();
+    dropzone.classList.remove("dragover");
+    var files = e.dataTransfer && e.dataTransfer.files;
+    if (files && files.length) {
+      uploadInput.files = files;
+      setSelectedFile(files[0]);
+    }
+  });
+
+  downloadTranscriptBtn.addEventListener("click", downloadTranscript);
+  downloadSummaryBtn.addEventListener("click", downloadSummary);
+
+  searchForm.addEventListener("submit", function (e) {
+    e.preventDefault();
+    var q = searchInput.value.trim();
+    if (!q) return;
+    runSearch(q);
+  });
+
+  setStatus("idle");
+})();
+</script>
+</body>
+</html>

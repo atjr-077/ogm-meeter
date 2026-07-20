@@ -1,0 +1,15 @@
+fastapi
+uvicorn[standard]
+sqlalchemy[asyncio]>=2.0
+asyncpg
+pgvector
+pydantic
+pydantic-settings
+python-multipart
+python-dotenv
+openai
+sentence-transformers<4.0
+pyannote.audio
+torch
+torchaudio
+aiosqlite
