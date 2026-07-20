@@ -578,7 +578,7 @@
     </div>
     <h1>Meeting Bot</h1>
   </div>
-  <p class="subtitle">Offline room recorder &amp; AI notetaker</p>
+  <p class="subtitle">Offline room recorder &amp; AI notetaker <span id="apiStatus" style="float: right; margin-right: 16px; font-family: var(--mono); font-size: 12px; font-weight: bold;"></span></p>
 
   <div class="panel record-area">
     <div class="record-btn-shell" id="recordBtnShell">
@@ -730,31 +730,8 @@
 (function () {
   "use strict";
 
-  // Backend URL resolution, in priority order:
-  // 1. ?api=<url> query param (persisted to localStorage so it survives reloads)
-  // 2. previously saved localStorage value
-  // 3. localhost:8000 for local dev (file:// or localhost)
-  // 4. PROD_API_BASE below, for a deployed frontend talking to a deployed backend
-  var PROD_API_BASE = "";
-
-  var API_BASE = (function () {
-    var params = new URLSearchParams(location.search);
-    var fromQuery = params.get("api");
-    if (fromQuery) {
-      localStorage.setItem("meetingbot_api_base", fromQuery);
-      return fromQuery.replace(/\/$/, "");
-    }
-    var stored = localStorage.getItem("meetingbot_api_base");
-    if (stored) return stored.replace(/\/$/, "");
-    if (location.protocol === "file:" || !location.hostname || location.hostname === "localhost" || location.hostname === "127.0.0.1") {
-      return "http://localhost:8000";
-    }
-    return PROD_API_BASE.replace(/\/$/, "");
-  })();
-
-  if (!API_BASE) {
-    console.error("No backend API URL configured. Set PROD_API_BASE in index.html, or load the page with ?api=https://your-backend-url");
-  }
+  // Backend URL resolution
+  const API_BASE = window.location.origin;
 
   var recordBtn = document.getElementById("recordBtn");
   var recordBtnShell = document.getElementById("recordBtnShell");
@@ -1365,6 +1342,26 @@
   });
 
   setStatus("idle");
+
+  async function checkHealth() {
+    try {
+      const res = await fetch(`${API_BASE}/health`);
+      const data = await res.json();
+      setApiStatus(data.status === 'ok');
+    } catch (e) {
+      setApiStatus(false);
+    }
+  }
+
+  function setApiStatus(isOnline) {
+    var statusIndicator = document.getElementById("apiStatus");
+    if (statusIndicator) {
+      statusIndicator.textContent = isOnline ? "API Online" : "API Offline";
+      statusIndicator.style.color = isOnline ? "var(--success)" : "var(--danger)";
+    }
+  }
+
+  checkHealth();
 })();
 </script>
 </body>

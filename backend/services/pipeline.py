@@ -43,7 +43,13 @@ async def process_meeting(session_id: str) -> None:
         full_wav = await asyncio.to_thread(audio_utils.concatenate_and_normalize, session_id)
 
         try:
-            diarization_segments = await asyncio.to_thread(diarizer.diarize, str(full_wav))
+            from config import ENABLE_DIARIZATION
+            if ENABLE_DIARIZATION:
+                diarization_segments = await asyncio.to_thread(diarizer.diarize, str(full_wav))
+            else:
+                diarization_segments = [
+                    {"speaker": "SPEAKER_00", "start_ms": 0, "end_ms": 10**9}
+                ]
             logger.info(
                 f"meeting_id={session_id} event=diarization_done segments={len(diarization_segments)}"
             )

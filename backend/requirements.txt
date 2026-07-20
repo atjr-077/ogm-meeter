@@ -9,7 +9,7 @@ python-multipart
 python-dotenv
 openai
 sentence-transformers<4.0
-pyannote.audio
-torch
-torchaudio
+ffmpeg-python
+numpy
+requests
 aiosqlite

@@ -24,17 +24,12 @@ logging.basicConfig(
 logger = logging.getLogger("meetingbot.main")
 
 
-@asynccontextmanager
-async def lifespan(app: FastAPI):
-    Path(settings.data_dir).mkdir(parents=True, exist_ok=True)
-    async with engine.begin() as conn:
-        await conn.run_sync(Base.metadata.create_all)
-    embeddings.load_model()
-    logger.info("event=startup_complete")
-    yield
+@app.on_event("startup")
+async def startup_event():
+    logger.info("Meeting Bot backend starting")
 
 
-app = FastAPI(title="Meeting Bot", lifespan=lifespan)
+app = FastAPI(title="Meeting Bot")
 
 app.add_middleware(
     CORSMiddleware,
@@ -177,3 +172,15 @@ async def search(body: schemas.SearchRequest, db: AsyncSession = Depends(get_db)
         for item in scored_rows[:body.limit]
     ]
     return schemas.SearchResponse(results=results)
+
+
+@app.get("/health")
+async def health_check():
+    return {
+        "status": "ok",
+        "message": "Backend is running"
+    }
+
+
+from fastapi.staticfiles import StaticFiles
+app.mount("/", StaticFiles(directory="frontend", html=True), name="frontend")

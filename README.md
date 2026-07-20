@@ -216,3 +216,29 @@ meeting-bot/
 ├── .gitignore
 └── README.md
 ```
+
+# Deploy on Hugging Face Spaces (Free)
+
+## Create Space
+
+* SDK: Docker
+* Hardware: CPU Basic
+
+## Add Secrets
+
+* DATABASE_URL
+* GROQ_API_KEY
+* HF_TOKEN
+* ENABLE_DIARIZATION=false
+
+## Push
+
+```bash
+git add .
+git commit -m "HF Spaces deployment"
+git push origin main
+```
+
+The app will be available at:
+
+`https://USERNAME-ogm-meeter.hf.space`
